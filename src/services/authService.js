@@ -14,10 +14,6 @@ export const authService = {
       const stored = localStorage.getItem(AUTH_USER_KEY);
       if (stored) return JSON.parse(stored);
     } catch (_) {}
-    // Default to the demo regular user in demo mode for instant frictionless testing
-    if (isDemoMode()) {
-      return mockStore.users[0]; // Alex Rivera (USER)
-    }
     return null;
   },
 
@@ -36,11 +32,13 @@ export const authService = {
       const cleanEmail = (email || '').trim().toLowerCase();
       const user = mockStore.users.find((u) => (u.email || '').toLowerCase() === cleanEmail);
       if (!user) {
+        this.setCurrentUser(null);
         throw new Error(`No account found for "${email}". Please check your email or register.`);
       }
 
       const expectedPassword = user.password || 'demo1234';
       if (!password || password !== expectedPassword) {
+        this.setCurrentUser(null);
         throw new Error('Incorrect password. Please verify your credentials and try again.');
       }
 

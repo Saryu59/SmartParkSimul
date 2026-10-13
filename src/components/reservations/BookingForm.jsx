@@ -37,7 +37,9 @@ export function BookingForm({ preselectedSlotId }) {
   };
 
   const [slotId, setSlotId] = useState(preselectedSlotId || 'A2');
-  const [durationMinutes, setDurationMinutes] = useState(60); // Default 1 hour
+  const [bookingDate, setBookingDate] = useState(defaultDateStr);
+  const [startTimeStr, setStartTimeStr] = useState(formatTimeInput(defaultStartTime));
+  const [endTimeStr, setEndTimeStr] = useState(formatTimeInput(defaultEndTime));
   const [licensePlate, setLicensePlate] = useState(user?.licensePlate || 'ABC-7890');
   const [userName, setUserName] = useState(user?.name || 'Alex Rivera');
   const [userEmail, setUserEmail] = useState(user?.email || 'alex@smartpark.demo');
@@ -55,11 +57,11 @@ export function BookingForm({ preselectedSlotId }) {
 
   const selectedSlot = slots.find((s) => s.id === slotId);
 
-  // Automatically start NOW and end after selected duration
-  const startDateTime = new Date(simulatedTime.getTime());
-  const endDateTime = new Date(simulatedTime.getTime() + durationMinutes * 60000);
-  const isValidInterval = true;
-  const isPastTime = false;
+  // Construct start/end Date objects
+  const startDateTime = new Date(`${bookingDate}T${startTimeStr}:00`);
+  const endDateTime = new Date(`${bookingDate}T${endTimeStr}:00`);
+  const isValidInterval = !isNaN(startDateTime) && !isNaN(endDateTime) && endDateTime > startDateTime;
+  const isPastTime = isValidInterval && startDateTime.getTime() < simulatedTime.getTime() - 2 * 60000;
 
   // Real-time conflict checking: Slot collision
   const conflict = isValidInterval
@@ -279,49 +281,78 @@ export function BookingForm({ preselectedSlotId }) {
         )}
       </div>
 
-      {/* Quick Duration Selection */}
+      {/* Schedule Interval */}
       <div className="space-y-3">
         <label className="text-xs font-bold text-charcoal-700 uppercase tracking-wider">
-          Reservation Duration
+          Date & Time
         </label>
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { label: '30 Mins', value: 30 },
-            { label: '1 Hour', value: 60 },
-            { label: '2 Hours', value: 120 },
-            { label: '4 Hours', value: 240 },
-          ].map((dur) => (
-            <button
-              key={dur.value}
-              type="button"
-              onClick={() => setDurationMinutes(dur.value)}
-              className={`py-2 px-3 rounded-lg text-xs font-semibold border transition ${
-                durationMinutes === dur.value
-                  ? 'bg-forest-700 text-white border-forest-700 shadow-xs'
-                  : 'bg-white border-charcoal-200 text-charcoal-700 hover:bg-canvas'
-              }`}
-            >
-              {dur.label}
-            </button>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div>
+            <label className="block text-charcoal-600 font-medium mb-1">Reservation Date</label>
+            <div className="relative">
+              <Calendar className="w-4 h-4 text-charcoal-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="date"
+                min={defaultDateStr}
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+                required
+                className="w-full pl-9 pr-3 py-2 border border-charcoal-200 rounded-lg text-xs bg-canvas text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-forest-500/20 focus:border-forest-600"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-charcoal-600 font-medium mb-1">Start Time</label>
+            <div className="relative">
+              <Clock className="w-4 h-4 text-charcoal-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="time"
+                value={startTimeStr}
+                onChange={(e) => setStartTimeStr(e.target.value)}
+                required
+                className="w-full pl-9 pr-3 py-2 border border-charcoal-200 rounded-lg text-xs bg-canvas text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-forest-500/20 focus:border-forest-600"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-charcoal-600 font-medium mb-1">End Time</label>
+            <div className="relative">
+              <Clock className="w-4 h-4 text-charcoal-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="time"
+                value={endTimeStr}
+                onChange={(e) => setEndTimeStr(e.target.value)}
+                required
+                className="w-full pl-9 pr-3 py-2 border border-charcoal-200 rounded-lg text-xs bg-canvas text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-forest-500/20 focus:border-forest-600"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="text-xs text-charcoal-600 bg-canvas p-2.5 rounded-lg border border-charcoal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span>Reserving immediately: <strong className="text-charcoal-900">{formatTimeOnly(startDateTime.toISOString())} – {formatTimeOnly(endDateTime.toISOString())}</strong> ({durationMinutes >= 60 ? `${durationMinutes / 60}h` : `${durationMinutes}m`})</span>
-          {conflict ? (
-            <span className="text-red-600 font-semibold flex items-center gap-1">
-              <AlertCircle className="w-3.5 h-3.5" /> Bay conflict with {conflict.id}
-            </span>
-          ) : driverConflict ? (
-            <span className="text-red-600 font-semibold flex items-center gap-1">
-              <AlertCircle className="w-3.5 h-3.5" /> Driver holds overlapping Bay {driverConflict.slotId} ({driverConflict.id})
-            </span>
-          ) : (
-            <span className="text-forest-700 font-medium flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Bay available for immediate hold
-            </span>
-          )}
-        </div>
+        {isValidInterval && (
+          <div className="text-xs text-charcoal-600 bg-canvas p-2.5 rounded-lg border border-charcoal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span>Duration: <strong className="text-charcoal-900">{formatDuration(startDateTime.toISOString(), endDateTime.toISOString())}</strong></span>
+            {isPastTime ? (
+              <span className="text-red-600 font-semibold flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> Start time cannot be in the past ({formatTimeOnly(simulatedTime.toISOString())})
+              </span>
+            ) : conflict ? (
+              <span className="text-red-600 font-semibold flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> Bay conflict with {conflict.id}
+              </span>
+            ) : driverConflict ? (
+              <span className="text-red-600 font-semibold flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> Driver holds overlapping Bay {driverConflict.slotId} ({driverConflict.id})
+              </span>
+            ) : (
+              <span className="text-forest-700 font-medium flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Bay available
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Driver & Vehicle Details */}

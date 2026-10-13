@@ -21,6 +21,9 @@ export function AuthProvider({ children }) {
       const u = await authService.login(email, password);
       setUser(u);
       return u;
+    } catch (err) {
+      setUser(null);
+      throw err;
     } finally {
       setIsLoading(false);
     }
