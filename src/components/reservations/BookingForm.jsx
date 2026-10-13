@@ -188,26 +188,18 @@ export function BookingForm({ preselectedSlotId }) {
             <span className="text-charcoal-500">Vehicle License:</span>
             <span className="font-mono font-semibold text-charcoal-800">{confirmedReservation.licensePlate}</span>
           </div>
-          <div className="flex justify-between border-t border-charcoal-200 pt-2.5">
-            <span className="text-charcoal-500">Grace Period:</span>
-            <span className="font-semibold text-amber-700">10 mins</span>
+          <div className="flex justify-between border-t border-charcoal-100 pt-2.5">
+            <span className="text-charcoal-500">Arrival Waiting Window:</span>
+            <span className="font-semibold text-forest-700">10 mins</span>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div>
           <button
             onClick={() => navigate('/my-reservations')}
-            className="flex-1 py-2.5 px-4 bg-forest-700 hover:bg-forest-800 text-white font-semibold rounded-lg text-xs transition shadow-xs"
+            className="w-full py-2.5 px-4 bg-forest-700 hover:bg-forest-800 text-white font-semibold rounded-lg text-xs transition shadow-xs"
           >
-            My Reservations
-          </button>
-          <button
-            onClick={() => {
-              setConfirmedReservation(null);
-            }}
-            className="flex-1 py-2.5 px-4 border border-charcoal-200 text-charcoal-700 font-semibold rounded-lg text-xs hover:bg-canvas transition"
-          >
-            Book Another Bay
+            View My Reservations
           </button>
         </div>
       </div>

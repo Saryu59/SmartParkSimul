@@ -26,7 +26,10 @@ class MockStore {
       this.slots = storedSlots ? JSON.parse(storedSlots) : getInitialSlots();
       this.reservations = storedReservations ? JSON.parse(storedReservations) : getInitialReservations();
       this.events = storedEvents ? JSON.parse(storedEvents) : getInitialEvents();
-      this.users = storedUsers ? JSON.parse(storedUsers) : getInitialUsers();
+      this.users = (storedUsers ? JSON.parse(storedUsers) : getInitialUsers()).map((u) => ({
+        ...u,
+        password: u.password || 'demo1234',
+      }));
       this.gracePeriodMinutes = storedGrace ? parseInt(storedGrace, 10) : DEFAULT_GRACE_PERIOD_MINUTES;
 
       // Enforce strict single active session per vehicle / driver on load

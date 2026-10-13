@@ -120,7 +120,7 @@ export function SettingsPage() {
                 <div className="space-y-1">
                   <label className="font-semibold text-charcoal-700 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-forest-700" />
-                    <span>No-Show Grace Period (Admin)</span>
+                    <span>Reservation Waiting Window (Admin)</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <input

@@ -95,7 +95,7 @@ export function ReservationCard({ reservation, onCancel, simulatedNow }) {
             {formatDuration(reservation.startTime, reservation.endTime)}
           </span>
           <span className="text-[11px] text-charcoal-500 block">
-            {graceMinutes}-min grace period
+            {graceMinutes}-min arrival window
           </span>
         </div>
 
@@ -113,7 +113,7 @@ export function ReservationCard({ reservation, onCancel, simulatedNow }) {
               ) : minutesUntilGraceExpiry > 0 ? (
                 <span className="text-amber-700 font-bold flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 animate-spin text-amber-600" />
-                  Grace expires in {minutesUntilGraceExpiry} min
+                  Hold expires in {minutesUntilGraceExpiry} min
                 </span>
               ) : (
                 <span className="text-red-700 font-bold">Lapsed</span>

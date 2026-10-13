@@ -32,14 +32,18 @@ export const authService = {
 
   async login(email, password) {
     if (isDemoMode()) {
-      // Demo validation
-      const user = mockStore.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      // Demo validation: strictly verify email AND password match
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const user = mockStore.users.find((u) => (u.email || '').toLowerCase() === cleanEmail);
       if (!user) {
-        throw new Error('No demo account found with this email. Try alex@smartpark.demo or admin@smartpark.demo.');
+        throw new Error(`No account found for "${email}". Please check your email or register.`);
       }
-      if (password && password.length < 4) {
-        throw new Error('Password must be at least 4 characters in demo mode.');
+
+      const expectedPassword = user.password || 'demo1234';
+      if (!password || password !== expectedPassword) {
+        throw new Error('Incorrect password. Please verify your credentials and try again.');
       }
+
       this.setCurrentUser(user);
       return user;
     }
@@ -54,7 +58,8 @@ export const authService = {
 
   async register({ name, email, password, licensePlate, role = 'USER' }) {
     if (isDemoMode()) {
-      const existing = mockStore.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const existing = mockStore.users.find((u) => (u.email || '').toLowerCase() === cleanEmail);
       if (existing) {
         throw new Error('An account with this email already exists.');
       }
@@ -62,6 +67,7 @@ export const authService = {
         id: `usr-${Date.now()}`,
         name,
         email,
+        password: password || 'demo1234',
         role: role.toUpperCase(),
         licensePlate: licensePlate || 'ABC-1234',
         registeredAt: new Date().toISOString(),

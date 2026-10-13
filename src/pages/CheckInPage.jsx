@@ -18,7 +18,9 @@ import {
   Search,
   ScanLine,
   UserCheck,
-  Lock
+  Lock,
+  Loader2,
+  Car
 } from 'lucide-react';
 import { RESERVATION_STATUS } from '../constants/reservations';
 
@@ -28,13 +30,14 @@ export function CheckInPage() {
   const initialCode = searchParams.get('code') || '';
 
   const { user, isAdmin, isGuest } = useAuth();
-  const { reservations, checkIn, checkOut, events, simulatedTime } = useParking();
+  const { reservations, slots, toggleSensorOccupancy, checkIn, checkOut, events, simulatedTime } = useParking();
   const { addToast } = useNotification();
 
   const [code, setCode] = useState(initialCode);
   const [isScanning, setIsScanning] = useState(true);
-  const [result, setResult] = useState(null); // { success: boolean, message: string, reservation?: object }
+  const [result, setResult] = useState(null); // { success?: boolean, isProcessing?: boolean, message: string, reservation?: object }
   const [loading, setLoading] = useState(false);
+  const [pendingCheckIn, setPendingCheckIn] = useState(null); // { code, reservation, slotId }
 
   // Sync if query param changes
   useEffect(() => {
@@ -42,6 +45,41 @@ export function CheckInPage() {
       setCode(initialCode);
     }
   }, [initialCode]);
+
+  // Active listener: when pendingCheckIn is waiting, monitor assigned slot until car is physically present
+  useEffect(() => {
+    if (!pendingCheckIn) return;
+
+    const assignedSlot = slots.find((s) => s.id === pendingCheckIn.slotId);
+    if (assignedSlot && assignedSlot.isOccupied) {
+      // Vehicle has physically entered the bay! Finalize check-in!
+      const finalizeCheckIn = async () => {
+        try {
+          setLoading(true);
+          const updatedRes = await checkIn(pendingCheckIn.code);
+          setPendingCheckIn(null);
+          setResult({
+            success: true,
+            isProcessing: false,
+            message: `Vehicle ${updatedRes.licensePlate} physically detected in Bay ${updatedRes.slotId}! Check-in verified and parking session is now ACTIVE.`,
+            reservation: updatedRes,
+          });
+          addToast(`Vehicle physically detected in Bay ${updatedRes.slotId}! Check-in complete.`, 'success');
+        } catch (err) {
+          setResult({
+            success: false,
+            isProcessing: false,
+            message: err.message || 'Check-in completion failed.',
+          });
+          setPendingCheckIn(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      finalizeCheckIn();
+    }
+  }, [slots, pendingCheckIn, checkIn, addToast]);
 
   // Handle Check In attempt
   const handlePerformCheckIn = async (codeToVerify) => {
@@ -54,19 +92,47 @@ export function CheckInPage() {
       return;
     }
 
+    // Match upcoming reservation
+    const targetRes = reservations.find(
+      (r) =>
+        r.id.toUpperCase() === targetCode.toUpperCase() ||
+        (r.qrCodePayload && r.qrCodePayload.toUpperCase().includes(targetCode.toUpperCase()))
+    );
+
+    if (targetRes) {
+      const assignedSlot = slots.find((s) => s.id === targetRes.slotId);
+      // If car is not physically present in bay yet, enter Processing state
+      if (!assignedSlot?.isOccupied) {
+        setPendingCheckIn({
+          code: targetCode,
+          reservation: targetRes,
+          slotId: targetRes.slotId,
+        });
+        setResult({
+          isProcessing: true,
+          message: `Check-in initiated. Barrier gate opened for vehicle ${targetRes.licensePlate}. Processing check-in... Waiting for vehicle to be physically parked in Bay ${targetRes.slotId}.`,
+          reservation: targetRes,
+        });
+        addToast(`Barrier opened! Waiting for car to park in Bay ${targetRes.slotId}...`, 'info');
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setResult(null);
       const updatedRes = await checkIn(targetCode);
       setResult({
         success: true,
-        message: `Check-in validated! Slot ${updatedRes.slotId} barrier gate opened for vehicle ${updatedRes.licensePlate}.`,
+        isProcessing: false,
+        message: `Vehicle physically detected in Bay ${updatedRes.slotId}! Check-in validated and session ACTIVE.`,
         reservation: updatedRes,
       });
       addToast(`Vehicle verified for Slot ${updatedRes.slotId}!`, 'success');
     } catch (err) {
       setResult({
         success: false,
+        isProcessing: false,
         message: err.message || 'Check-in validation failed.',
       });
     } finally {
@@ -213,27 +279,35 @@ export function CheckInPage() {
           {result && (
             <div
               className={`rounded-xl border p-5 space-y-3 animate-in zoom-in-95 ${
-                result.success
+                result.isProcessing
+                  ? 'bg-amber-50 border-amber-300 text-amber-950'
+                  : result.success
                   ? 'bg-forest-50/90 border-forest-200 text-forest-950'
                   : 'bg-red-50/90 border-red-200 text-red-950'
               }`}
             >
               <div className="flex items-start gap-3">
-                {result.success ? (
+                {result.isProcessing ? (
+                  <Loader2 className="w-5 h-5 text-amber-600 animate-spin shrink-0 mt-0.5" />
+                ) : result.success ? (
                   <CheckCircle2 className="w-5 h-5 text-forest-700 shrink-0 mt-0.5" />
                 ) : (
                   <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                 )}
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1">
                   <h4 className="font-bold text-sm">
-                    {result.success ? 'Verification Successful' : 'Validation Error'}
+                    {result.isProcessing
+                      ? 'Processing Check-In (Awaiting Physical Vehicle Arrival)...'
+                      : result.success
+                      ? 'Verification Successful'
+                      : 'Validation Error'}
                   </h4>
                   <p className="text-xs leading-relaxed">{result.message}</p>
                 </div>
               </div>
 
               {result.reservation && (
-                <div className="bg-white rounded-lg p-3 text-xs space-y-1 border border-charcoal-200">
+                <div className="bg-white rounded-lg p-3 text-xs space-y-1.5 border border-charcoal-200">
                   <div className="flex justify-between">
                     <span className="text-charcoal-500">Bay Assigned:</span>
                     <span className="font-bold text-charcoal-900">Bay {result.reservation.slotId}</span>
@@ -243,9 +317,37 @@ export function CheckInPage() {
                     <span className="font-mono font-semibold text-charcoal-800">{result.reservation.licensePlate}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-charcoal-500">Status:</span>
-                    <span className="font-bold text-forest-700">{result.reservation.status}</span>
+                    <span className="text-charcoal-500">Session Status:</span>
+                    <span className={`font-bold ${result.isProcessing ? 'text-amber-700 flex items-center gap-1.5' : 'text-forest-700'}`}>
+                      {result.isProcessing && (
+                        <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                      )}
+                      {result.isProcessing ? 'Processing / Waiting for Sensor Detection' : result.reservation.status}
+                    </span>
                   </div>
+                </div>
+              )}
+
+              {result.isProcessing && (
+                <div className="pt-2 border-t border-amber-200 flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleSensorOccupancy(result.reservation.slotId)}
+                    className="flex-1 py-2 px-3 bg-forest-700 hover:bg-forest-800 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5"
+                  >
+                    <Car className="w-4 h-4" />
+                    <span>Park Vehicle in Bay {result.reservation.slotId} (Simulate Arrival)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingCheckIn(null);
+                      setResult(null);
+                    }}
+                    className="py-2 px-3 border border-amber-300 text-amber-800 hover:bg-amber-100 rounded-lg text-xs font-medium transition"
+                  >
+                    Cancel
+                  </button>
                 </div>
               )}
             </div>

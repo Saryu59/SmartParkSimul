@@ -235,9 +235,9 @@ export function DemoControlsDrawer({ isOpen, onClose }) {
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-900 text-xs leading-relaxed">
-                  <strong>Grace Period & Expiration Test:</strong>
+                  <strong>10-Minute Waiting & Arrival Window Test:</strong>
                   <br />
-                  A 10-minute grace period applies to upcoming bookings. Fast-forwarding time past a reservation start time without checking in triggers automatic no-show expiration.
+                  A 10-minute waiting window applies after making a reservation. Fast-forwarding time past this 10-minute arrival window without checking in triggers automatic no-show release.
                 </div>
 
                 <div className="space-y-2">
@@ -253,7 +253,7 @@ export function DemoControlsDrawer({ isOpen, onClose }) {
                       onClick={() => advanceClock(10)}
                       className="py-2 px-3 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-800 font-medium transition"
                     >
-                      + 10 Minutes (Grace Exp.)
+                      + 10 Minutes (Arrival Exp.)
                     </button>
                     <button
                       onClick={() => advanceClock(30)}
