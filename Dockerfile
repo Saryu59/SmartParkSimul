@@ -1,30 +1,23 @@
-# Stage 1: Build React Vite app
-FROM node:18-alpine AS builder
+# syntax=docker/dockerfile:1
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+# Install system build dependencies for psycopg2 and asyncpg
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+# Install python dependencies from backend folder
+COPY backend/requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Argument to pass backend API URL during build
-ARG VITE_API_BASE_URL=http://localhost:8000/api/v1
-ARG VITE_WS_URL=ws://localhost:8000/ws/live
-ARG VITE_DEMO_MODE=false
+# Copy backend application files
+COPY backend/ .
 
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_WS_URL=$VITE_WS_URL
-ENV VITE_DEMO_MODE=$VITE_DEMO_MODE
+EXPOSE 8000
 
-RUN npm run build
-
-# Stage 2: Serve with Nginx
-FROM nginx:alpine
-
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Start Uvicorn on Render's dynamic $PORT (fallback to 8000)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

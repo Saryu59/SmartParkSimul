@@ -1,0 +1,19 @@
+# Git and IDE
+.git
+.github
+.vscode
+.idea
+
+# Python environment and cache
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+*.db
+.env
+*.log
