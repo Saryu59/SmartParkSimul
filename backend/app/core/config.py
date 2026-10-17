@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
 
     # CORS
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
@@ -41,17 +41,21 @@ class Settings(BaseSettings):
             return v.replace("postgres://", "postgresql://", 1)
         return v
 
-    @field_validator("CORS_ORIGINS", mode="before")
+    @field_validator("CORS_ORIGINS", mode="after")
     @classmethod
     def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str):
-            if v.strip() == "*":
+            v_clean = v.strip()
+            if v_clean == "*":
                 return ["*"]
             import json
             try:
-                return json.loads(v)
+                parsed = json.loads(v_clean)
+                if isinstance(parsed, list):
+                    return parsed
             except Exception:
-                return [orig.strip() for orig in v.split(",") if orig.strip()]
+                pass
+            return [orig.strip() for orig in v_clean.split(",") if orig.strip()]
         return v
 
     # Security
