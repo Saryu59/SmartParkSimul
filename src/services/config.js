@@ -21,11 +21,19 @@ export function setDemoMode(enabled) {
 }
 
 export function getApiBaseUrl() {
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  let base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1').trim().replace(/\/+$/, '');
+  if (!base.endsWith('/api/v1')) {
+    base = `${base}/api/v1`;
+  }
+  return base;
 }
 
 export function getWsUrl() {
-  return import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/live';
+  let ws = (import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/live').trim().replace(/\/+$/, '');
+  if (!ws.endsWith('/ws/live')) {
+    ws = `${ws}/ws/live`;
+  }
+  return ws;
 }
 
 export const APP_CONFIG = {
