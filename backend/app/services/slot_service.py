@@ -13,18 +13,35 @@ class SlotService:
     async def get_active_reservation_map(db: AsyncSession, reference_time: Optional[datetime] = None) -> Dict[str, str]:
         """
         Returns a mapping of slot_id -> active/upcoming reservation_id at reference_time.
+        Auto-completes/expires any past-due reservations whose end_time has passed.
         """
         now = reference_time or datetime.now(timezone.utc)
+
+        # 1. Clean up expired active / upcoming reservations whose end_time has passed
+        expired_stmt = select(Reservation).where(
+            and_(
+                Reservation.status.in_(["ACTIVE", "UPCOMING"]),
+                Reservation.end_time < now,
+            )
+        )
+        expired_res = await db.execute(expired_stmt)
+        expired_list = expired_res.scalars().all()
+        if expired_list:
+            for r in expired_list:
+                if r.status == "ACTIVE":
+                    r.status = "COMPLETED"
+                    r.checked_out_at = r.checked_out_at or now
+                else:
+                    r.status = "EXPIRED"
+                r.updated_at = now
+            await db.commit()
+
+        # 2. Get active bookings that are currently valid right now
         stmt = select(Reservation).where(
             and_(
-                or_(
-                    Reservation.status == "ACTIVE",
-                    and_(
-                        Reservation.status == "UPCOMING",
-                        Reservation.start_time <= now,
-                        Reservation.end_time >= now,
-                    )
-                )
+                Reservation.status.in_(["ACTIVE", "UPCOMING"]),
+                Reservation.start_time <= now,
+                Reservation.end_time >= now,
             )
         )
         result = await db.execute(stmt)

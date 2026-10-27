@@ -123,15 +123,38 @@ class SensorService:
                     reservation_id=active_res.id,
                     timestamp=now,
                 )
-        elif not is_occupied and previous_occupancy:
-            audit_event = AuditEvent(
-                event_type="SENSOR_VACATED",
-                severity="INFO",
-                slot_id=slot_id,
-                title=f"Bay {slot_id} Vacated",
-                description=f"Optical IR beam clear at Bay {slot_id}.",
-                timestamp=now,
+        elif not is_occupied:
+            # Check if there is an active reservation in this slot to auto-complete
+            res_stmt = select(Reservation).where(
+                and_(
+                    Reservation.slot_id == slot_id,
+                    Reservation.status == "ACTIVE",
+                )
             )
+            res_res = await db.execute(res_stmt)
+            active_res = res_res.scalars().first()
+            if active_res:
+                active_res.status = "COMPLETED"
+                active_res.checked_out_at = now
+                active_res.updated_at = now
+                audit_event = AuditEvent(
+                    event_type="AUTO_CHECKOUT_VACATED",
+                    severity="INFO",
+                    slot_id=slot_id,
+                    title=f"Auto Check-out: Bay {slot_id} Vacated",
+                    description=f"Optical IR beam clear at Bay {slot_id}. Physical departure detected for {active_res.id}; session completed automatically.",
+                    reservation_id=active_res.id,
+                    timestamp=now,
+                )
+            elif previous_occupancy:
+                audit_event = AuditEvent(
+                    event_type="SENSOR_VACATED",
+                    severity="INFO",
+                    slot_id=slot_id,
+                    title=f"Bay {slot_id} Vacated",
+                    description=f"Optical IR beam clear at Bay {slot_id}.",
+                    timestamp=now,
+                )
 
         if audit_event:
             db.add(audit_event)

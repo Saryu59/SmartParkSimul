@@ -15,8 +15,8 @@
 #include <HTTPClient.h>
 
 // ================= USER CONFIGURATION =================
-const char* WIFI_SSID     = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID     = "VNRVJIET_E";
+const char* WIFI_PASSWORD = "vnrvjiet@123";
 
 // Backend API endpoint on Render
 const char* SERVER_URL    = "https://smartparksimul.onrender.com/api/v1/sensors/events";
