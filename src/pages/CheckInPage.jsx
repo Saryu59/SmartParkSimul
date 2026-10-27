@@ -110,10 +110,10 @@ export function CheckInPage() {
         });
         setResult({
           isProcessing: true,
-          message: `Check-in initiated. Barrier gate opened for vehicle ${targetRes.licensePlate}. Processing check-in... Waiting for vehicle to be physically parked in Bay ${targetRes.slotId}.`,
+          message: `Check-in initiated for vehicle ${targetRes.licensePlate}. Processing check-in... Waiting for vehicle to be physically parked in Bay ${targetRes.slotId}.`,
           reservation: targetRes,
         });
-        addToast(`Barrier opened! Waiting for car to park in Bay ${targetRes.slotId}...`, 'info');
+        addToast(`Waiting for car to park in Bay ${targetRes.slotId}...`, 'info');
         return;
       }
     }
@@ -125,16 +125,13 @@ export function CheckInPage() {
       setResult({
         success: true,
         isProcessing: false,
-        message: `Vehicle physically detected in Bay ${updatedRes.slotId}! Check-in validated and session ACTIVE.`,
+        message: `Vehicle physically detected in Bay ${updatedRes.slotId}! Check-in verified and session ACTIVE.`,
         reservation: updatedRes,
       });
       addToast(`Vehicle verified for Slot ${updatedRes.slotId}!`, 'success');
     } catch (err) {
-      setResult({
-        success: false,
-        isProcessing: false,
-        message: err.message || 'Check-in validation failed.',
-      });
+      // Do not display loud validation error notifications
+      setResult(null);
     } finally {
       setLoading(false);
     }
@@ -276,31 +273,25 @@ export function CheckInPage() {
         {/* Validation Result & Active Checkout Column */}
         <div className="space-y-6">
           {/* Result Card */}
-          {result && (
+          {result && (result.isProcessing || result.success) && (
             <div
               className={`rounded-xl border p-5 space-y-3 animate-in zoom-in-95 ${
                 result.isProcessing
                   ? 'bg-amber-50 border-amber-300 text-amber-950'
-                  : result.success
-                  ? 'bg-forest-50/90 border-forest-200 text-forest-950'
-                  : 'bg-red-50/90 border-red-200 text-red-950'
+                  : 'bg-forest-50/90 border-forest-200 text-forest-950'
               }`}
             >
               <div className="flex items-start gap-3">
                 {result.isProcessing ? (
                   <Loader2 className="w-5 h-5 text-amber-600 animate-spin shrink-0 mt-0.5" />
-                ) : result.success ? (
-                  <CheckCircle2 className="w-5 h-5 text-forest-700 shrink-0 mt-0.5" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-forest-700 shrink-0 mt-0.5" />
                 )}
                 <div className="space-y-1 flex-1">
                   <h4 className="font-bold text-sm">
                     {result.isProcessing
                       ? 'Processing Check-In (Awaiting Physical Vehicle Arrival)...'
-                      : result.success
-                      ? 'Verification Successful'
-                      : 'Validation Error'}
+                      : 'Verification Successful'}
                   </h4>
                   <p className="text-xs leading-relaxed">{result.message}</p>
                 </div>

@@ -236,12 +236,8 @@ class ReservationService:
         if res.status in ["CANCELLED", "EXPIRED", "COMPLETED"]:
             raise ValueError(f"Cannot check in: reservation {res.id} is already {res.status.lower()}.")
 
-        # Arrival window check: allow check-in up to 30 mins before start until end_time
-        res_start = ensure_utc(res.start_time)
+        # Arrival window check: allow check-in at any time once booked until end_time
         res_end = ensure_utc(res.end_time)
-        earliest_arrival = res_start - timedelta(minutes=30)
-        if now < earliest_arrival:
-            raise ValueError(f"Too early to check in. Gate permits arrival starting {earliest_arrival.strftime('%H:%M')}.")
         if now > res_end:
             raise ValueError("Reservation booking window has expired.")
 

@@ -36,11 +36,10 @@ class SlotService:
                 r.updated_at = now
             await db.commit()
 
-        # 2. Get active bookings that are currently valid right now
+        # 2. Get active bookings that are currently held or active right now
         stmt = select(Reservation).where(
             and_(
                 Reservation.status.in_(["ACTIVE", "UPCOMING"]),
-                Reservation.start_time <= now,
                 Reservation.end_time >= now,
             )
         )
