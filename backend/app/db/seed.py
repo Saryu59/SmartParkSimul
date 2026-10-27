@@ -12,7 +12,7 @@ from app.core.security import hash_password
 HARDWARE_PINS = {
     "A1": {"pin": 13, "sensor_name": "IR-OPTICAL-01", "is_accessible": True, "zone": "A", "distance": 10},
     "A2": {"pin": 14, "sensor_name": "IR-OPTICAL-02", "is_accessible": False, "zone": "A", "distance": 14},
-    "A3": {"pin": 16, "sensor_name": "IR-OPTICAL-03", "is_accessible": False, "zone": "A", "distance": 18},
+    "A3": {"pin": 27, "sensor_name": "IR-OPTICAL-03", "is_accessible": False, "zone": "A", "distance": 18},
     "B1": {"pin": 17, "sensor_name": "IR-OPTICAL-04", "is_accessible": False, "zone": "B", "distance": 20},
     "B2": {"pin": 18, "sensor_name": "IR-OPTICAL-05", "is_accessible": False, "zone": "B", "distance": 24},
     "B3": {"pin": 19, "sensor_name": "IR-OPTICAL-06", "is_accessible": False, "zone": "B", "distance": 28},

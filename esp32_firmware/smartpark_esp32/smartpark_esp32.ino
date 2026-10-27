@@ -5,7 +5,7 @@
  * Pin Mapping:
  *   Bay A1 (S1) -> GPIO 13 (D13)
  *   Bay A2 (S2) -> GPIO 14 (D14)
- *   Bay A3 (S3) -> GPIO 16 (RX2)
+ *   Bay A3 (S3) -> GPIO 27 (D27)
  *   Bay B1 (S4) -> GPIO 17 (TX2)
  *   Bay B2 (S5) -> GPIO 18 (D18)
  *   Bay B3 (S6) -> GPIO 19 (D19)
@@ -15,8 +15,8 @@
 #include <HTTPClient.h>
 
 // ================= USER CONFIGURATION =================
-const char* WIFI_SSID     = "VNRVJIET_E";
-const char* WIFI_PASSWORD = "vnrvjiet@123";
+const char* WIFI_SSID     = "S4";
+const char* WIFI_PASSWORD = "11111111";
 
 // Backend API endpoint on Render
 const char* SERVER_URL    = "https://smartparksimul.onrender.com/api/v1/sensors/events";
@@ -34,7 +34,7 @@ struct SlotPin {
 SlotPin slots[6] = {
   {"A1", 13, false, 0},
   {"A2", 14, false, 0},
-  {"A3", 16, false, 0},
+  {"A3", 27, false, 0},
   {"B1", 17, false, 0},
   {"B2", 18, false, 0},
   {"B3", 19, false, 0}

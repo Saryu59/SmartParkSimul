@@ -12,7 +12,7 @@ This directory contains the firmware code for interfacing the physical parking l
 |---|---|---|---|
 | **A1** | S1 OUT | **GPIO 13 (D13)** | Slot A1 Occupancy |
 | **A2** | S2 OUT | **GPIO 14 (D14)** | Slot A2 Occupancy |
-| **A3** | S3 OUT | **GPIO 16 (RX2)** | Slot A3 Occupancy |
+| **A3** | S3 OUT | **GPIO 27 (D27)** | Slot A3 Occupancy |
 | **B1** | S4 OUT | **GPIO 17 (TX2)** | Slot B1 Occupancy |
 | **B2** | S5 OUT | **GPIO 18 (D18)** | Slot B2 Occupancy |
 | **B3** | S6 OUT | **GPIO 19 (D19)** | Slot B3 Occupancy |
