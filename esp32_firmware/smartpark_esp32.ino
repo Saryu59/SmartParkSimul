@@ -1,20 +1,18 @@
 /*
- * SmartPark IoT ESP32 Firmware
- * Hardware: ESP32 DevKit V1 + 6x IR Obstacle Sensors + 1x SG90 Servo Barrier
+ * SmartPark IoT ESP32 Firmware (Sensors-Only Version)
+ * Hardware: ESP32 DevKit V1 + 6x IR Obstacle Sensors
  * 
  * Pin Mapping:
- *   Bay A1 (S1) -> GPIO 13
- *   Bay A2 (S2) -> GPIO 14
- *   Bay A3 (S3) -> GPIO 16
- *   Bay B1 (S4) -> GPIO 17
- *   Bay B2 (S5) -> GPIO 18
- *   Bay B3 (S6) -> GPIO 19
- *   Barrier Servo -> GPIO 25
+ *   Bay A1 (S1) -> GPIO 13 (D13)
+ *   Bay A2 (S2) -> GPIO 14 (D14)
+ *   Bay A3 (S3) -> GPIO 16 (RX2)
+ *   Bay B1 (S4) -> GPIO 17 (TX2)
+ *   Bay B2 (S5) -> GPIO 18 (D18)
+ *   Bay B3 (S6) -> GPIO 19 (D19)
  */
 
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <ESP32Servo.h>
 
 // ================= USER CONFIGURATION =================
 const char* WIFI_SSID     = "YOUR_WIFI_SSID";
@@ -42,12 +40,9 @@ SlotPin slots[6] = {
   {"B3", 19, false, 0}
 };
 
-const int SERVO_PIN = 25;
-Servo barrierServo;
-
 // Debounce & heartbeat timings (in milliseconds)
-const unsigned long DEBOUNCE_DELAY = 1200;    // 1.2s filter against IR flutter
-const unsigned long HEARTBEAT_INTERVAL = 30000; // 30s status ping
+const unsigned long DEBOUNCE_DELAY = 1000;      // 1.0s filter against IR flutter
+const unsigned long HEARTBEAT_INTERVAL = 30000;   // 30s status ping
 unsigned long lastHeartbeat = 0;
 unsigned int sequenceNumber = 1;
 
@@ -70,14 +65,6 @@ void connectWiFi() {
   } else {
     Serial.println("\nWiFi connection failed! Continuing to monitor sensors...");
   }
-}
-
-void openBarrier() {
-  Serial.println("Opening entrance barrier...");
-  barrierServo.write(90);  // Open position
-  delay(5000);             // Keep open for 5 seconds
-  barrierServo.write(0);   // Close position
-  Serial.println("Entrance barrier closed.");
 }
 
 void sendSensorEvent(const char* slotId, bool isOccupied, const char* rawReading) {
@@ -133,12 +120,6 @@ void setup() {
     // IR Obstacle Sensor: Active LOW (LOW when car detected, HIGH when clear)
     slots[i].lastOccupied = (digitalRead(slots[i].pin) == LOW);
   }
-
-  // Setup barrier servo
-  ESP32PWM::allocateTimer(0);
-  barrierServo.setPeriodHertz(50);
-  barrierServo.attach(SERVO_PIN, 500, 2400);
-  barrierServo.write(0); // Start closed
 
   connectWiFi();
   
